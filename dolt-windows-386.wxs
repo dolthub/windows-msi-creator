@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*" Name="Dolt" Language="1033" Version="0.13.0" Manufacturer="Liquidata" UpgradeCode="6BC40754-759D-4899-9FD3-E6BE1823CACD">
+        <Package Compressed="yes" Manufacturer="Liquidata" InstallScope="perMachine" InstallerVersion="500" Platform="x86" />
+		<MajorUpgrade DowngradeErrorMessage="The version you're attempting to install is older than the installed version." AllowDowngrades="no" AllowSameVersionUpgrades="no" />
+        <MediaTemplate EmbedCab="yes" />
+		<WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+		<WixVariable Id="WixUIBannerBmp" Value="liquidatabanner.bmp" />
+		<WixVariable Id="WixUIDialogBmp" Value="liquidatadialog.bmp" />
+		<WixVariable Id="WixUIExclamationIco" Value="liquidataicon.ico" />
+		<WixVariable Id="WixUIInfoIco" Value="liquidataicon.ico" />
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Component Id="Path" Guid="0f00b40b-5587-40e6-9a93-35706a6adf8a">
+                <Environment Id="PATH" Name="PATH" Value="[DOLTINSTALLDIRECTORY]\bin" Permanent="no" Part="last" Action="set" System="no" />
+            </Component>
+            <Directory Id="ProgramFilesFolder">
+                <Directory Name="Dolt" Id="DOLTINSTALLDIRECTORY">
+					<Component Win64="no" Id="CMP_LICENSES" Guid="1e5b52c2-2ee7-4875-b410-71d0cfb91c4e">
+						<File Id="FILE_LICENSES" KeyPath="yes" Source="dolt\LICENSES" />
+					</Component>
+					<Directory Name="bin" Id="DIR_BIN">
+						<Component Win64="no" Id="CMP_DOLTEXE" Guid="504086da-db5b-4a46-b683-fa3ca9f2ddfe">
+							<File Id="FILE_DOLTEXE" KeyPath="yes" Source="dolt\bin\dolt.exe" />
+						</Component>
+						<Component Win64="no" Id="CMP_GITDOLT" Guid="b28a2dc2-5727-4cf8-94fd-9c2024fe49f9">
+							<File Id="FILE_GITDOLTEXE" KeyPath="yes" Source="dolt\bin\git-dolt.exe" />
+						</Component>
+						<Component Win64="no" Id="CMP_GITDOLTSMUDGE" Guid="23821f55-7029-43df-a78e-900dd4cb8578">
+							<File Id="FILE_GITDOLTSMUDGEEXE" KeyPath="yes" Source="dolt\bin\git-dolt-smudge.exe" />
+						</Component>
+					</Directory>
+                </Directory>
+            </Directory>
+            <Directory Id="ProgramMenuFolder">
+                <Directory Id="DIR_STARTMENUDIR" Name="Dolt">
+                    <Component Id="CMP_UNINSTALLSHORTCUT" Guid="4ACBEBEB-AAD3-41F6-82CD-097410EFFFE3">
+                        <RemoveFolder Id="DIR_STARTMENUDIR" On="uninstall" />
+                        <RegistryValue Root="HKCU" Key="Software\[Manufacturer]\[ProductName]" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+                        <Shortcut Id="UninstallProduct" Name="Uninstall Dolt" Description="Uninstalls the application" Target="[SystemFolder]msiexec.exe" Arguments="/x [ProductCode]" />
+                    </Component>
+                </Directory>
+            </Directory>
+        </Directory>
+        <Feature Id="FileToInstallFeature" Title="Dolt" Level="1" ConfigurableDirectory="DOLTINSTALLDIRECTORY">
+            <ComponentRef Id="CMP_LICENSES" />
+			<ComponentRef Id="CMP_DOLTEXE" />
+			<ComponentRef Id="CMP_GITDOLT" />
+			<ComponentRef Id="CMP_GITDOLTSMUDGE" />
+            <ComponentRef Id="Path" />
+        </Feature>
+		<Feature Id="ShortcutsFeature" Title="Start Menu Shortcuts" Level="1">
+			<ComponentRef Id="CMP_UNINSTALLSHORTCUT" />
+		</Feature>
+		<UIRef Id="WixUI_FeatureTree" />
+    </Product>
+</Wix>
