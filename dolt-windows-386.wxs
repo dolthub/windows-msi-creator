@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product Id="*" Name="Dolt" Language="1033" Version="0.13.0" Manufacturer="Liquidata" UpgradeCode="6BC40754-759D-4899-9FD3-E6BE1823CACD">
+    <Product Id="*" Name="Dolt PROCESSED_DOLT_VERSION" Language="1033" Version="PROCESSED_DOLT_VERSION" Manufacturer="Liquidata" UpgradeCode="6BC40754-759D-4899-9FD3-E6BE1823CACD">
         <Package Compressed="yes" Manufacturer="Liquidata" InstallScope="perMachine" InstallerVersion="500" Platform="x86" />
 		<MajorUpgrade DowngradeErrorMessage="The version you're attempting to install is older than the installed version." AllowDowngrades="no" AllowSameVersionUpgrades="no" />
         <MediaTemplate EmbedCab="yes" />

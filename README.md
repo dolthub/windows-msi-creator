@@ -2,13 +2,10 @@
 
 ## Steps
 
-1. Run `prepare.bat` in the Windows Command Prompt (`cmd.exe`).
-2. Copy `dolt-windows-386.tar.gz` & `dolt-windows-amd64.tar.gz` to the `archives` folder.
+1. Create the `archives` & `output` folders if they do not exist.
+2. Copy `dolt-windows-386.zip` & `dolt-windows-amd64.zip` to the `archives` folder.
     * This is created in `prepare.bat` if it did not already exist.
-3. Update the `Version` attribute of the `Product` XML element in the following files:
-    * `dolt-windows-386.wxs`
-    * `dolt-windows-amd64.wxs`
-4. Run `process.bat` in the Windows Command Prompt.
+3. Run `process.bat` in the Windows Command Prompt.
     * `warning LGHT1076 : ICE90` may be safely ignored.
-5. Grab the files from the `output` folder.
+4. Grab the files from the `output` folder.
     * You may remove the files from the `archives` folder as they're no longer necessary.
