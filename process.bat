@@ -34,7 +34,7 @@ del /F /Q dolt-windows-amd64-proc.wixpdb 2> nul
 del /F /Q dolt-windows-amd64-proc.wixobj 2> nul
 rmdir /Q /S dolt > nul
 :: Skip x86 if it does not exist
-if not exist "archives\dolt-windows-386.zip" exit /B
+if not exist "archives\dolt-windows-386.zip" del /F /Q dolt-windows-386-proc.wxs 2> nul & exit /B
 echo.
 echo ---------------------------- Creating x86 MSI ----------------------------
 :: Extract to a top-level dolt directory
