@@ -17,8 +17,7 @@ move "archives\dolt" dolt > nul
 :: Verify the version pulled
 for /f "tokens=*" %%i in ('dolt\bin\dolt.exe version') do set PROCESSED_DOLT_VERSION=%%i
 set PROCESSED_DOLT_VERSION=%PROCESSED_DOLT_VERSION:dolt version =%
-choice /C YN /M "Is '%PROCESSED_DOLT_VERSION%' the correct version? Y for Yes, N for No."
-if ERRORLEVEL 2 exit /B
+echo Dolt version is '%PROCESSED_DOLT_VERSION%'
 powershell -Command "(gc dolt-windows-386.wxs) -replace 'PROCESSED_DOLT_VERSION', '%PROCESSED_DOLT_VERSION%' | Out-File -encoding ASCII dolt-windows-386-proc.wxs"
 powershell -Command "(gc dolt-windows-amd64.wxs) -replace 'PROCESSED_DOLT_VERSION', '%PROCESSED_DOLT_VERSION%' | Out-File -encoding ASCII dolt-windows-amd64-proc.wxs"
 echo.
