@@ -93,7 +93,7 @@ jobs:
 
            try {
              const data = fs.readFileSync(path.join(process.env.WORKSPACE, "output", "dolt-windows-amd64.msi"))
-             const res = await github.uploadReleaseAsset({
+             const res = await github.repos.uploadReleaseAsset({
                owner: "dolthub",
                repo: "dolt",
                release_id: 40890407,
