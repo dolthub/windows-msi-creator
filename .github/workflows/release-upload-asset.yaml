@@ -83,7 +83,7 @@ jobs:
 #           asset_path: ./output/dolt-windows-amd64.msi
 #           asset_name: dolt-windows-amd64.msi
 #           asset_content_type: application/octet-stream
-      - uses: actions/github-script@v4
+        uses: actions/github-script@v4
         with:
          debug: true
          github-token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
