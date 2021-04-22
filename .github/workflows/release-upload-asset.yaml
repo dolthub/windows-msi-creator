@@ -96,6 +96,7 @@ jobs:
              const res = await github.repos.uploadReleaseAsset({
                owner: "dolthub",
                repo: "dolt",
+               name: "dolt-windows-amd64.msi",
                release_id: 40890407,
                data,
              });
