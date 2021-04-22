@@ -14,11 +14,27 @@ on:
         default: "1.15.11"
 
 jobs:
-  build-release-binaries:
+  get-release-id:
     name: Build Release Binaries
     runs-on: ubuntu-18.04
     outputs:
       release_id: ${{ steps.get_release.outputs.release_id }}
+    steps:
+      - name: Get Release
+        id: get_release
+        run: |
+          release_id="$RELEASE_ID"
+          if [ "$EVENT_TYPE" == "workflow_dispatch" ]; then
+            release_id=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/dolthub/dolt/releases/tags/v${{ github.event.inputs.version }} | jq '.id')
+          fi
+          echo "::set-output name=release_id::$release_id"
+        env:
+          EVENT_TYPE: ${{ github.event_name }}
+          RELEASE_ID: ${{ github.event.client_payload.release_id }}
+
+  build-release-binaries:
+    name: Build Release Binaries
+    runs-on: ubuntu-18.04
     steps:
       - name: Checkout code
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -34,19 +50,6 @@ jobs:
           repository: dolthub/dolt
           ref: ${{ github.event.client_payload.tag }}
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
-      - name: Get Release
-        id: get_release
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: |
-          release_id=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/dolthub/dolt/releases/tags/v${{ github.event.inputs.version }} | jq '.id')
-          echo "::set-output name=release_id::$release_id"
-      - name: Get Release
-        id: get_release
-        if: ${{ github.event_name == 'repository_dispatch' }}
-        run: |
-          echo "::set-output name=release_id::$RELEASE_ID"
-        env:
-          RELEASE_ID: ${{ github.event.client_payload.release_id }}
       - name: Build Binaries
         if: ${{ github.event_name == 'repository_dispatch' }}
         run: |
@@ -61,7 +64,7 @@ jobs:
           path: go/out/dolt-windows-amd64.zip
 
   upload-windows-msi:
-    needs: build-release-binaries
+    needs: [get-release-id, build-release-binaries]
     name: Upload Windows MSI to Dolt Release
     runs-on: windows-2019
     defaults:
@@ -106,4 +109,4 @@ jobs:
 
         env:
          WORKSPACE: ${{ github.workspace }}
-         RELEASE_ID: ${{ needs.build-release-binaries.outputs.release_id }}
+         RELEASE_ID: ${{ needs.get-release-id.outputs.release_id }}
