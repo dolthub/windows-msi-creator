@@ -15,7 +15,7 @@ on:
 
 jobs:
   get-release-id:
-    name: Build Release Binaries
+    name: Get Dolt Release Id
     runs-on: ubuntu-18.04
     outputs:
       release_id: ${{ steps.get_release.outputs.release_id }}
