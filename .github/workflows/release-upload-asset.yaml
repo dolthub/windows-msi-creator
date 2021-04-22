@@ -18,6 +18,8 @@ jobs:
   build-release-binaries:
     name: Build Release Binaries
     runs-on: ubuntu-18.04
+    outputs:
+      upload_url: ${{ steps.get_release.outputs.upload_url }}
     steps:
       - name: Checkout code
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -33,6 +35,14 @@ jobs:
           repository: dolthub/dolt
           ref: ${{ github.event.client_payload.tag }}
           token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+      - name: Get Release
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: joutvhu/get-release@v1
+        id: get_release
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
       - name: Build Binaries
         if: ${{ github.event_name == 'repository_dispatch' }}
         run: |
@@ -66,15 +76,12 @@ jobs:
       - name: Run Process.bat
         run: |
           ./process.bat
-          echo "Finished making msi"
-          ls output
-
-#      - name: Upload MSI to Dolt Release
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: go/out/dolt-darwin-amd64.tar.gz
-#          asset_name: dolt-darwin-amd64.tar.gz
-#          asset_content_type: application/zip
+      - name: Upload MSI to Dolt Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+        with:
+          upload_url: ${{ needs.build-release-binaries.outputs.upload_url }}
+          asset_path: output/dolt-windows-amd64.msi
+          asset_name: dolt-windows-amd64.msi
+          asset_content_type: application/zip
