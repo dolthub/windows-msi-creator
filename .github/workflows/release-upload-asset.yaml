@@ -10,7 +10,7 @@ on:
         description: "Upload url for uploading Windows MSI to Dolt Release"
         required: true
       go_version:
-        description: 'version to build binaries at'
+        description: 'go version to build binaries at'
         required: false
         default: "1.15.11"
 
@@ -47,6 +47,7 @@ jobs:
           path: go/out/dolt-windows-amd64.zip
 
   upload-windows-msi:
+    needs: build-release-binaries
     name: Upload Windows MSI to Dolt Release
     runs-on: windows-2019
     defaults:
