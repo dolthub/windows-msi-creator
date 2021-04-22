@@ -1,3 +1,5 @@
+name: Upload Windows MSI to Dolt Release
+
 on:
   repository_dispatch:
     types: [ upload-msi ]
@@ -5,9 +7,6 @@ on:
     inputs:
       version:
         description: 'SemVer format dolt release tag, i.e. 0.24.5'
-        required: true
-      upload_url:
-        description: "Upload url for uploading Windows MSI to Dolt Release"
         required: true
       go_version:
         description: 'go version to build binaries at'
@@ -37,12 +36,10 @@ jobs:
           token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
       - name: Get Release
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: joutvhu/get-release@v1
-        id: get_release
-        with:
-          tag_name: v${{ github.event.inputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+        run: |
+          upload_url=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/dolthub/dolt/releases/tags/v${{ github.event.inputs.version }} | jq '.upload_url')
+          echo "Found upload url for release $upload_url"
+          echo "::set-output name=upload_url::$upload_url"
       - name: Build Binaries
         if: ${{ github.event_name == 'repository_dispatch' }}
         run: |
@@ -50,7 +47,7 @@ jobs:
       - name: Build Binaries
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          GO_BUILD_VERSION=${{ github.event.client_payload.go_version }} go/utils/publishrelease/buildbinaries.sh
+          GO_BUILD_VERSION=${{ github.event.inputs.go_version }} go/utils/publishrelease/buildbinaries.sh
       - uses: actions/upload-artifact@v2
         with:
           name: dolt-windows-amd64-latest
