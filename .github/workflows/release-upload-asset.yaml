@@ -18,7 +18,7 @@ jobs:
     name: Build Release Binaries
     runs-on: ubuntu-18.04
     outputs:
-      upload_url: ${{ steps.get_release.outputs.upload_url }}
+      release_id: ${{ steps.get_release.outputs.release_id }}
     steps:
       - name: Checkout code
         if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -26,21 +26,27 @@ jobs:
         with:
           repository: dolthub/dolt
           ref: v${{ github.event.inputs.version }}
-          token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Checkout code
         if: ${{ github.event_name == 'repository_dispatch' }}
         uses: actions/checkout@v2
         with:
           repository: dolthub/dolt
           ref: ${{ github.event.client_payload.tag }}
-          token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Get Release
         id: get_release
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          upload_url=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/dolthub/dolt/releases/tags/v${{ github.event.inputs.version }} | jq '.upload_url')
-          echo "Found upload url for release $upload_url"
-          echo "::set-output name=upload_url::$upload_url"
+          release_id=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/dolthub/dolt/releases/tags/v${{ github.event.inputs.version }} | jq '.id')
+          echo "::set-output name=release_id::$release_id"
+      - name: Get Release
+        id: get_release
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        run: |
+          echo "::set-output name=release_id::$RELEASE_ID"
+        env:
+          RELEASE_ID: ${{ github.event.client_payload.release_id }}
       - name: Build Binaries
         if: ${{ github.event_name == 'repository_dispatch' }}
         run: |
@@ -75,18 +81,10 @@ jobs:
         run: |
           ./process.bat
       - name: Upload MSI to Dolt Release
-#         uses: actions/upload-release-asset@v1
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
-#         with:
-#           upload_url: ${{ needs.build-release-binaries.outputs.upload_url }}
-#           asset_path: ./output/dolt-windows-amd64.msi
-#           asset_name: dolt-windows-amd64.msi
-#           asset_content_type: application/octet-stream
         uses: actions/github-script@v4
         with:
          debug: true
-         github-token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+         github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
          script: |
            const fs = require('fs');
            const path = require('path')
@@ -97,12 +95,15 @@ jobs:
                owner: "dolthub",
                repo: "dolt",
                name: "dolt-windows-amd64.msi",
-               release_id: 40890407,
+               release_id: parseInt(process.env.RELEASE_ID, 10),
                data,
              });
-             console.log("Seems to have worked", res)
+             console.log("Successfully uploaded windows msi", res)
            } catch (err) {
-             console.log("Didnt work:", err);
+             console.log("Error", err);
+             process.exit(1);
            }
+
         env:
          WORKSPACE: ${{ github.workspace }}
+         RELEASE_ID: ${{ needs.build-release-binaries.outputs.release_id }}
