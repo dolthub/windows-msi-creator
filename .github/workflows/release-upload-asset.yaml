@@ -8,10 +8,6 @@ on:
       version:
         description: 'SemVer format dolt release tag, i.e. 0.24.5'
         required: true
-      go_version:
-        description: 'go version to build binaries at'
-        required: false
-        default: "1.15.11"
 
 jobs:
   get-release-id:
@@ -51,13 +47,8 @@ jobs:
           ref: ${{ github.event.client_payload.tag }}
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Build Binaries
-        if: ${{ github.event_name == 'repository_dispatch' }}
         run: |
-          GO_BUILD_VERSION=${{ github.event.client_payload.go_version }} go/utils/publishrelease/buildbinaries.sh
-      - name: Build Binaries
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: |
-          GO_BUILD_VERSION=${{ github.event.inputs.go_version }} go/utils/publishrelease/buildbinaries.sh
+          GO_BUILD_VERSION=1.15.11 go/utils/publishrelease/buildbinaries.sh
       - uses: actions/upload-artifact@v2
         with:
           name: dolt-windows-amd64-latest
