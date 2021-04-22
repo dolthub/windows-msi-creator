@@ -1,0 +1,79 @@
+on:
+  repository_dispatch:
+    types: [ upload-msi ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'SemVer format dolt release tag, i.e. 0.24.5'
+        required: true
+      upload_url:
+        description: "Upload url for uploading Windows MSI to Dolt Release"
+        required: true
+      go_version:
+        description: 'version to build binaries at'
+        required: false
+        default: "1.15.11"
+
+jobs:
+  build-release-binaries:
+    name: Build Release Binaries
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout code
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: actions/checkout@v2
+        with:
+          repository: dolthub/dolt
+          ref: v${{ github.event.inputs.version }}
+          token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+      - name: Checkout code
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        uses: actions/checkout@v2
+        with:
+          repository: dolthub/dolt
+          ref: ${{ github.event.client_payload.tag }}
+          token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+      - name: Build Binaries
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        run: |
+          GO_BUILD_VERSION=${{ github.event.client_payload.go_version }} go/utils/publishrelease/buildbinaries.sh
+      - name: Build Binaries
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          GO_BUILD_VERSION=${{ github.event.client_payload.go_version }} go/utils/publishrelease/buildbinaries.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dolt-windows-amd64-latest
+          path: go/out/dolt-windows-amd64.zip
+
+  upload-windows-msi:
+    name: Upload Windows MSI to Dolt Release
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Windows MSI
+        run: |
+          mkdir archives
+          mkdir output
+      - uses: actions/download-artifact@v2
+        with:
+          name: dolt-windows-amd64-latest
+          path: archives/dolt-windows-amd64.zip
+      - name: Run Process.bat
+        run: |
+          ./process.bat
+          echo "Finished making msi"
+          ls output
+
+#      - name: Upload MSI to Dolt Release
+#        uses: actions/upload-release-asset@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: go/out/dolt-darwin-amd64.tar.gz
+#          asset_name: dolt-darwin-amd64.tar.gz
+#          asset_content_type: application/zip
