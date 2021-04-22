@@ -14,45 +14,45 @@ on:
         default: "1.15.11"
 
 jobs:
-  build-release-binaries:
-    name: Build Release Binaries
-    runs-on: ubuntu-18.04
-    outputs:
-      upload_url: ${{ steps.get_release.outputs.upload_url }}
-    steps:
-      - name: Checkout code
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        uses: actions/checkout@v2
-        with:
-          repository: dolthub/dolt
-          ref: v${{ github.event.inputs.version }}
-          token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
-      - name: Checkout code
-        if: ${{ github.event_name == 'repository_dispatch' }}
-        uses: actions/checkout@v2
-        with:
-          repository: dolthub/dolt
-          ref: ${{ github.event.client_payload.tag }}
-          token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
-      - name: Get Release
-        id: get_release
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: |
-          upload_url=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/dolthub/dolt/releases/tags/v${{ github.event.inputs.version }} | jq '.upload_url')
-          echo "Found upload url for release $upload_url"
-          echo "::set-output name=upload_url::$upload_url"
-      - name: Build Binaries
-        if: ${{ github.event_name == 'repository_dispatch' }}
-        run: |
-          GO_BUILD_VERSION=${{ github.event.client_payload.go_version }} go/utils/publishrelease/buildbinaries.sh
-      - name: Build Binaries
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: |
-          GO_BUILD_VERSION=${{ github.event.inputs.go_version }} go/utils/publishrelease/buildbinaries.sh
-      - uses: actions/upload-artifact@v2
-        with:
-          name: dolt-windows-amd64-latest
-          path: go/out/dolt-windows-amd64.zip
+#  build-release-binaries:
+#    name: Build Release Binaries
+#    runs-on: ubuntu-18.04
+#    outputs:
+#      upload_url: ${{ steps.get_release.outputs.upload_url }}
+#    steps:
+#      - name: Checkout code
+#        if: ${{ github.event_name == 'workflow_dispatch' }}
+#        uses: actions/checkout@v2
+#        with:
+#          repository: dolthub/dolt
+#          ref: v${{ github.event.inputs.version }}
+#          token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+#      - name: Checkout code
+#        if: ${{ github.event_name == 'repository_dispatch' }}
+#        uses: actions/checkout@v2
+#        with:
+#          repository: dolthub/dolt
+#          ref: ${{ github.event.client_payload.tag }}
+#          token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+#      - name: Get Release
+#        id: get_release
+#        if: ${{ github.event_name == 'workflow_dispatch' }}
+#        run: |
+#          upload_url=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/dolthub/dolt/releases/tags/v${{ github.event.inputs.version }} | jq '.upload_url')
+#          echo "Found upload url for release $upload_url"
+#          echo "::set-output name=upload_url::$upload_url"
+#      - name: Build Binaries
+#        if: ${{ github.event_name == 'repository_dispatch' }}
+#        run: |
+#          GO_BUILD_VERSION=${{ github.event.client_payload.go_version }} go/utils/publishrelease/buildbinaries.sh
+#      - name: Build Binaries
+#        if: ${{ github.event_name == 'workflow_dispatch' }}
+#        run: |
+#          GO_BUILD_VERSION=${{ github.event.inputs.go_version }} go/utils/publishrelease/buildbinaries.sh
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          name: dolt-windows-amd64-latest
+#          path: go/out/dolt-windows-amd64.zip
 
   upload-windows-msi:
     needs: build-release-binaries
@@ -63,23 +63,23 @@ jobs:
         shell: powershell
     steps:
       - uses: actions/checkout@v2
-      - name: Build Windows MSI
-        run: |
-          mkdir archives
-          mkdir output
-      - uses: actions/download-artifact@v2
-        with:
-          name: dolt-windows-amd64-latest
-          path: archives/dolt-windows-amd64.zip
-      - name: Run Process.bat
-        run: |
-          ./process.bat
+#      - name: Build Windows MSI
+#        run: |
+#          mkdir archives
+#          mkdir output
+#      - uses: actions/download-artifact@v2
+#        with:
+#          name: dolt-windows-amd64-latest
+#          path: archives/dolt-windows-amd64.zip
+#      - name: Run Process.bat
+#        run: |
+#          ./process.bat
       - name: Upload MSI to Dolt Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+        uses: actions/github-script@v4
         with:
-          upload_url: ${{ needs.build-release-binaries.outputs.upload_url }}
-          asset_path: output/dolt-windows-amd64.msi
-          asset_name: dolt-windows-amd64.msi
-          asset_content_type: application/octet-stream
+          debug: true
+          github-token: ${{ secrets.DOLT_REPO_ACCESS_TOKEN }}
+          script: |
+            console.log(github)
+            console.log(github.rest)
+            console.log(github.repos)
