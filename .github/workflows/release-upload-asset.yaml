@@ -82,4 +82,4 @@ jobs:
           upload_url: ${{ needs.build-release-binaries.outputs.upload_url }}
           asset_path: output/dolt-windows-amd64.msi
           asset_name: dolt-windows-amd64.msi
-          asset_content_type: application/zip
+          asset_content_type: application/octet-stream
