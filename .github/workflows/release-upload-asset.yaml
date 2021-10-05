@@ -105,3 +105,31 @@ jobs:
         env:
          WORKSPACE: ${{ github.workspace }}
          RELEASE_ID: ${{ needs.get-release-id.outputs.release_id }}
+
+  winget-bump:
+    needs: upload-windows-msi
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Format Tag
+        id: get_tag
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        run: |
+          tag=${{ github.event.client_payload.tag }}
+          tag="${tag:1}"
+          echo "::set-output name=formatted_tag::$tag"
+      - name: Trigger Bump Winget
+        if: ${{ github.event_name == 'repository_dispatch' }}
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          event-type: bump-winget
+          repository: dolthub/dolt
+          client-payload: '{"version": "${{ steps.get_tag.outputs.formatted_tag }}"}'
+      - name: Trigger Bump Winget
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          event-type: bump-winget
+          repository: dolthub/dolt
+          client-payload: '{"version": "${{ github.event.inputs.version }}"}'
