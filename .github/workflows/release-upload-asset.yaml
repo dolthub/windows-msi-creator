@@ -132,4 +132,4 @@ jobs:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           event-type: bump-winget
           repository: dolthub/dolt
-          client-payload: '{"version": "${{ github.event.inputs.version }}"}'
+          client-payload: '{"version": "v${{ github.event.inputs.version }}"}'
