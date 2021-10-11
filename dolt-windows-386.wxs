@@ -6,9 +6,9 @@
         <MediaTemplate EmbedCab="yes" />
 		<WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
 		<WixVariable Id="WixUIBannerBmp" Value="liquidatabanner.bmp" />
-		<WixVariable Id="WixUIDialogBmp" Value="liquidatadialog.bmp" />
-		<WixVariable Id="WixUIExclamationIco" Value="liquidataicon.ico" />
-		<WixVariable Id="WixUIInfoIco" Value="liquidataicon.ico" />
+		<WixVariable Id="WixUIDialogBmp" Value="doltdialog.bmp" />
+		<WixVariable Id="WixUIExclamationIco" Value="dolticon.ico" />
+		<WixVariable Id="WixUIInfoIco" Value="dolticon.ico" />
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Component Id="Path" Guid="0f00b40b-5587-40e6-9a93-35706a6adf8a">
                 <Environment Id="PATH" Name="PATH" Value="[DOLTINSTALLDIRECTORY]\bin" Permanent="no" Part="last" Action="set" System="no" />
