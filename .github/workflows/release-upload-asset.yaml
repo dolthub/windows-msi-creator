@@ -106,30 +106,29 @@ jobs:
          WORKSPACE: ${{ github.workspace }}
          RELEASE_ID: ${{ needs.get-release-id.outputs.release_id }}
 
-  bump-rd:
+  get-version:
     needs: upload-windows-msi
     runs-on: ubuntu-18.04
-    if: ${{ github.event_name == 'repository_dispatch' }}
+    outputs:
+      version: steps.get_version.outputs.version
     steps:
-      - name: Trigger Bump Winget
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-          event-type: bump-winget
-          repository: dolthub/dolt
-          client-payload: '{"version": "${{ github.event.client_payload.tag }}"}'
-      - name: Trigger Bump Chocolatey
-        uses: peter-evans/repository-dispatch@v1
-        with:
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-          event-type: bump-chocolatey
-          repository: dolthub/chocolatey-packages
-          client-payload: '{"version": "${{ github.event.client_payload.tag }}"}'
+      - name: Get version
+        id: get_version
+        run: |
+          version=""
+          
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]
+          then
+            version="${{ github.event.client_payload.tag }}"
+          else
+            version="${{ github.event.inputs.version }}"
+          fi
 
-  bump-wd:
-    needs: upload-windows-msi
+          echo "::set-output name=version::$version"
+
+  bump-dolt-packages:
+    needs: get-version
     runs-on: ubuntu-18.04
-    if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Trigger Bump Winget
         uses: peter-evans/repository-dispatch@v1
@@ -137,11 +136,11 @@ jobs:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           event-type: bump-winget
           repository: dolthub/dolt
-          client-payload: '{"version": "v${{ github.event.inputs.version }}"}'
+          client-payload: '{"version": "${{ needs.get-version.outputs.version }}"}'
       - name: Trigger Bump Chocolatey
         uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           event-type: bump-chocolatey
           repository: dolthub/chocolatey-packages
-          client-payload: '{"version": "v${{ github.event.inputs.version }}"}'
+          client-payload: '{"version": "${{ needs.get-version.outputs.version }}"}'
