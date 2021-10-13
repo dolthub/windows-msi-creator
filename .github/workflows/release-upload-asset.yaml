@@ -32,23 +32,36 @@ jobs:
           EVENT_TYPE: ${{ github.event_name }}
           RELEASE_ID: ${{ github.event.client_payload.release_id }}
 
+  get-version:
+    name: Get Version
+    runs-on: ubuntu-18.04
+    outputs:
+      version: steps.get_version.outputs.version
+    steps:
+      - name: Get version
+        id: get_version
+        run: |
+          version=""
+
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]
+          then
+            version="${{ github.event.client_payload.tag }}"
+          else
+            version="v${{ github.event.inputs.version }}"
+          fi
+
+          echo "::set-output name=version::$version"
+
   build-release-binaries:
+    needs: get-version
     name: Build Release Binaries
     runs-on: ubuntu-18.04
     steps:
       - name: Checkout code
-        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/checkout@v2
         with:
           repository: dolthub/dolt
-          ref: ${{ github.event.inputs.commitish || format('v{0}', github.event.inputs.version) }}
-          token: ${{ secrets.REPO_ACCESS_TOKEN }}
-      - name: Checkout code
-        if: ${{ github.event_name == 'repository_dispatch' }}
-        uses: actions/checkout@v2
-        with:
-          repository: dolthub/dolt
-          ref: ${{ github.event.client_payload.tag }}
+          ref: ${{ github.event.inputs.commitish || needs.get-version.outputs.version }}
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Build Binaries
         run: |
@@ -59,7 +72,7 @@ jobs:
           path: go/out/dolt-windows-amd64.zip
 
   upload-windows-msi:
-    needs: [get-release-id, build-release-binaries]
+    needs: [get-version, get-release-id, build-release-binaries]
     name: Upload Windows MSI to Dolt Release
     runs-on: windows-2019
     defaults:
@@ -106,28 +119,8 @@ jobs:
          WORKSPACE: ${{ github.workspace }}
          RELEASE_ID: ${{ needs.get-release-id.outputs.release_id }}
 
-  get-version:
-    needs: upload-windows-msi
-    runs-on: ubuntu-18.04
-    outputs:
-      version: steps.get_version.outputs.version
-    steps:
-      - name: Get version
-        id: get_version
-        run: |
-          version=""
-          
-          if [ "${{ github.event_name }}" == "repository_dispatch" ]
-          then
-            version="${{ github.event.client_payload.tag }}"
-          else
-            version="${{ github.event.inputs.version }}"
-          fi
-
-          echo "::set-output name=version::$version"
-
   bump-dolt-packages:
-    needs: get-version
+    needs: [get-version, upload-windows-msi]
     runs-on: ubuntu-18.04
     steps:
       - name: Trigger Bump Winget
