@@ -47,7 +47,7 @@ jobs:
           then
             version="${{ github.event.client_payload.tag }}"
           else
-            version="v${{ github.event.inputs.version }}"
+            version="${{ github.event.inputs.version }}"
           fi
 
           echo "::set-output name=version::$version"
