@@ -36,7 +36,7 @@ jobs:
     name: Get Version
     runs-on: ubuntu-18.04
     outputs:
-      version: steps.get_version.outputs.version
+      version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Get version
         id: get_version
