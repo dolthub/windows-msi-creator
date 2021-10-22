@@ -61,7 +61,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           repository: dolthub/dolt
-          ref: ${{ github.event.inputs.commitish || needs.get-version.outputs.version }}
+          ref: ${{ github.event.inputs.commitish || format('v{0}', needs.get-version.outputs.version) }}
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Build Binaries
         run: |
