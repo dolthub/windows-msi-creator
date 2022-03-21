@@ -65,7 +65,7 @@ jobs:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Build Binaries
         run: |
-          GO_BUILD_VERSION=1.17.1 go/utils/publishrelease/buildbinaries.sh
+          GO_BUILD_VERSION=1.18.0 go/utils/publishrelease/buildbinaries.sh
       - uses: actions/upload-artifact@v2
         with:
           name: dolt-windows-amd64-latest
