@@ -16,7 +16,7 @@ on:
 jobs:
   get-release-id:
     name: Get Dolt Release Id
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     outputs:
       release_id: ${{ steps.get_release.outputs.release_id }}
     steps:
@@ -34,7 +34,7 @@ jobs:
 
   get-version:
     name: Get Version
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
@@ -55,7 +55,7 @@ jobs:
   build-release-binaries:
     needs: get-version
     name: Build Release Binaries
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -121,7 +121,7 @@ jobs:
 
   bump-dolt-packages:
     needs: [get-version, upload-windows-msi]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Trigger Bump Winget
         uses: peter-evans/repository-dispatch@v1
