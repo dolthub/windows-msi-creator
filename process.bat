@@ -17,7 +17,6 @@ move "archives\dolt" dolt > nul
 :: Get the first line of the command `dolt version`
 for /f "tokens=*" %%i in ('dolt\bin\dolt.exe version') do set (PROCESSED_DOLT_VERSION=%%i & goto next)
 :next
-:: Filter out the text `dolt version `
 set PROCESSED_DOLT_VERSION=%PROCESSED_DOLT_VERSION:dolt version =%
 echo Dolt version is '%PROCESSED_DOLT_VERSION%'
 powershell -Command "(gc dolt-windows-386.wxs) -replace 'PROCESSED_DOLT_VERSION', '%PROCESSED_DOLT_VERSION%' | Out-File -encoding ASCII dolt-windows-386-proc.wxs"
