@@ -14,16 +14,15 @@ echo ------------------------- Checking Dolt Version --------------------------
 7z.exe x -oarchives archives/dolt-windows-amd64.zip > nul
 ren "archives\dolt-windows-amd64" dolt > nul
 move "archives\dolt" dolt > nul
+
 :: Get the first line of the command `dolt version`
-set /a "x=0"
-for /f "tokens=*" %%i in ('dolt\bin\dolt.exe version') do (
-  if %%x == "0" (
-    set PROCESSED_DOLT_VERSION=%%i
-  )
-  set /a "x=x+1"
-)
+dolt\bin\dolt.exe version > out
+powershell -Command "Get-Content -Path .\out | Select-Object -First 1 | Set-Content -Path .\out2"
+for /f "tokens=*" %%i in (out2) do set PROCESSED_DOLT_VERSION=%%i
+
 set PROCESSED_DOLT_VERSION=%PROCESSED_DOLT_VERSION:dolt version =%
 echo Dolt version is '%PROCESSED_DOLT_VERSION%'
+
 powershell -Command "(gc dolt-windows-386.wxs) -replace 'PROCESSED_DOLT_VERSION', '%PROCESSED_DOLT_VERSION%' | Out-File -encoding ASCII dolt-windows-386-proc.wxs"
 powershell -Command "(gc dolt-windows-amd64.wxs) -replace 'PROCESSED_DOLT_VERSION', '%PROCESSED_DOLT_VERSION%' | Out-File -encoding ASCII dolt-windows-amd64-proc.wxs"
 echo.
