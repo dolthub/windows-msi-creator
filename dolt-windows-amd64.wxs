@@ -22,12 +22,6 @@
 						<Component Win64="yes" Id="CMP_DOLTEXE" Guid="504086da-db5b-4a46-b683-fa3ca9f2ddfe">
 							<File Id="FILE_DOLTEXE" KeyPath="yes" Source="dolt\bin\dolt.exe" />
 						</Component>
-						<Component Win64="yes" Id="CMP_GITDOLT" Guid="b28a2dc2-5727-4cf8-94fd-9c2024fe49f9">
-							<File Id="FILE_GITDOLTEXE" KeyPath="yes" Source="dolt\bin\git-dolt.exe" />
-						</Component>
-						<Component Win64="yes" Id="CMP_GITDOLTSMUDGE" Guid="23821f55-7029-43df-a78e-900dd4cb8578">
-							<File Id="FILE_GITDOLTSMUDGEEXE" KeyPath="yes" Source="dolt\bin\git-dolt-smudge.exe" />
-						</Component>
 					</Directory>
                 </Directory>
             </Directory>
@@ -44,8 +38,6 @@
         <Feature Id="FileToInstallFeature" Title="Dolt" Level="1" ConfigurableDirectory="DOLTINSTALLDIRECTORY">
             <ComponentRef Id="CMP_LICENSES" />
 			<ComponentRef Id="CMP_DOLTEXE" />
-			<ComponentRef Id="CMP_GITDOLT" />
-			<ComponentRef Id="CMP_GITDOLTSMUDGE" />
             <ComponentRef Id="Path" />
         </Feature>
 		<Feature Id="ShortcutsFeature" Title="Start Menu Shortcuts" Level="1">
