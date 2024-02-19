@@ -8,6 +8,12 @@ on:
       version:
         description: 'SemVer format dolt release tag, i.e. 0.24.5'
         required: true
+      profile_bucket:
+        description: 'bucket of profile key for pgo builds'
+        required: true
+      profile_key:
+        description: 'key of profile for pgo builds'
+        required: true
       commitish:
         description: 'the dolt commit used to build the msi. if provided, used instead of version number'
         required: false
@@ -63,9 +69,27 @@ jobs:
           repository: dolthub/dolt
           ref: ${{ github.event.inputs.commitish || format('v{0}', needs.get-version.outputs.version) }}
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
-      - name: Build Binaries
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME_CORP }}
+          aws-region: us-west-2
+      - name: Get Results
+        id: get-results
+        run: aws s3api get-object --bucket="$BUCKET" --key="$KEY" dolt-cpu-profile.pprof
+        env:
+          KEY: ${{ github.event.inputs.profile_key || github.event.client_payload.profile_key }}
+          BUCKET: ${{ github.event.inputs.profile_bucket || github.event.client_payload.bucket }}
+      - name: Build PGO Binaries
+        id: build_binaries
         run: |
-          GO_BUILD_VERSION=1.21 go/utils/publishrelease/buildbinaries.sh
+          latest=$(git rev-parse HEAD)
+          echo "commitish=$latest" >> $GITHUB_OUTPUT
+          GO_BUILD_VERSION=1.21 go/utils/publishrelease/buildpgobinaries.sh
+        env:
+          GO_BUILD_VERSION: "1.21"
+          PROFILE: ${{ format('{0}/dolt-cpu-profile.pprof', github.workspace) }}
       - uses: actions/upload-artifact@v2
         with:
           name: dolt-windows-amd64-latest
