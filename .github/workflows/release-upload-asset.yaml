@@ -90,9 +90,9 @@ jobs:
         run: |
           latest=$(git rev-parse HEAD)
           echo "commitish=$latest" >> $GITHUB_OUTPUT
-          GO_BUILD_VERSION=1.21 go/utils/publishrelease/buildpgobinaries.sh
+          GO_BUILD_VERSION=1.22 go/utils/publishrelease/buildpgobinaries.sh
         env:
-          GO_BUILD_VERSION: "1.21"
+          GO_BUILD_VERSION: "1.22"
           PROFILE: ${{ format('{0}/dolt-cpu-profile.pprof', github.workspace) }}
       - uses: actions/upload-artifact@v2
         with:
