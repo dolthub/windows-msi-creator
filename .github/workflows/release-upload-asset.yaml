@@ -94,7 +94,7 @@ jobs:
         env:
           GO_BUILD_VERSION: "1.22"
           PROFILE: ${{ format('{0}/dolt-cpu-profile.pprof', github.workspace) }}
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: dolt-windows-amd64-latest
           path: go/out/dolt-windows-amd64.zip
