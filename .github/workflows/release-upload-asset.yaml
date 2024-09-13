@@ -112,7 +112,7 @@ jobs:
         run: |
           mkdir archives
           mkdir output
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4
         with:
           name: dolt-windows-amd64-latest
           path: archives/dolt-windows-amd64.zip
