@@ -102,7 +102,7 @@ jobs:
   upload-windows-msi:
     needs: [get-version, get-release-id, build-release-binaries]
     name: Upload Windows MSI to Dolt Release
-    runs-on: windows-2019
+    runs-on: windows-latest
     defaults:
       run:
         shell: powershell
