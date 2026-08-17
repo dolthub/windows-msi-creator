@@ -22,6 +22,10 @@ on:
         description: 'the dolt commit used to build the msi. if provided, used instead of version number'
         required: false
         default: ''
+      repository:
+        description: 'repository that owns the source and release'
+        required: false
+        default: 'dolthub/dolt'
 
 jobs:
   get-release-id:
@@ -29,18 +33,31 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       release_id: ${{ steps.get_release.outputs.release_id }}
+      repository: ${{ steps.get_release.outputs.repository }}
     steps:
       - name: Get Release
         id: get_release
         run: |
+          repository="$REPOSITORY"
+          if [ -z "$repository" ]; then
+            repository="dolthub/dolt"
+          fi
+          case "$repository" in
+            dolthub/dolt|dolthub/dolt-enterprise) ;;
+            *) echo "Unsupported repository: $repository" >&2; exit 1 ;;
+          esac
+
           release_id="$RELEASE_ID"
           if [ "$EVENT_TYPE" == "workflow_dispatch" ]; then
-            release_id=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/dolthub/dolt/releases/tags/v${{ github.event.inputs.version }} | jq '.id')
+            release_id=$(gh api "repos/$repository/releases/tags/v${{ github.event.inputs.version }}" --jq '.id')
           fi
           echo "release_id=$release_id" >> $GITHUB_OUTPUT
+          echo "repository=$repository" >> $GITHUB_OUTPUT
         env:
+          GH_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
           EVENT_TYPE: ${{ github.event_name }}
           RELEASE_ID: ${{ github.event.client_payload.release_id }}
+          REPOSITORY: ${{ github.event.client_payload.repository || github.event.inputs.repository }}
 
   get-version:
     name: Get Version
@@ -63,14 +80,14 @@ jobs:
           echo "version=$version" >> $GITHUB_OUTPUT
 
   build-release-binaries:
-    needs: get-version
+    needs: [get-version, get-release-id]
     name: Build Release Binaries
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
         with:
-          repository: dolthub/dolt
+          repository: ${{ needs.get-release-id.outputs.repository }}
           ref: ${{ github.event.inputs.commitish || format('v{0}', needs.get-version.outputs.version) }}
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Configure AWS Credentials
@@ -107,7 +124,7 @@ jobs:
       run:
         shell: powershell
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - name: Build Windows MSI
         run: |
           mkdir archives
@@ -115,51 +132,54 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: dolt-windows-amd64-latest
-          path: archives/dolt-windows-amd64.zip
+          path: archives
       - name: Run Process.bat
         run: |
           ./process.bat
       - name: Upload MSI to Dolt Release
-        uses: actions/github-script@v4
+        uses: actions/github-script@v7
         with:
-         debug: true
-         github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
-         script: |
-           const fs = require('fs');
-           const path = require('path')
+          debug: true
+          github-token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path')
 
-           try {
-             const data = fs.readFileSync(path.join(process.env.WORKSPACE, "output", "dolt-windows-amd64.msi"))
-             const res = await github.repos.uploadReleaseAsset({
-               owner: "dolthub",
-               repo: "dolt",
-               name: "dolt-windows-amd64.msi",
-               release_id: parseInt(process.env.RELEASE_ID, 10),
-               data,
-             });
-             console.log("Successfully uploaded windows msi", res)
-           } catch (err) {
-             console.log("Error", err);
-             process.exit(1);
-           }
+            try {
+              const [owner, repo] = process.env.RELEASE_REPOSITORY.split('/');
+              const data = fs.readFileSync(path.join(process.env.WORKSPACE, "output", "dolt-windows-amd64.msi"))
+              const res = await github.rest.repos.uploadReleaseAsset({
+                owner,
+                repo,
+                name: "dolt-windows-amd64.msi",
+                release_id: parseInt(process.env.RELEASE_ID, 10),
+                data,
+              });
+              console.log("Successfully uploaded windows msi", res)
+            } catch (err) {
+              console.log("Error", err);
+              process.exit(1);
+            }
 
         env:
-         WORKSPACE: ${{ github.workspace }}
-         RELEASE_ID: ${{ needs.get-release-id.outputs.release_id }}
+          WORKSPACE: ${{ github.workspace }}
+          RELEASE_ID: ${{ needs.get-release-id.outputs.release_id }}
+          RELEASE_REPOSITORY: ${{ needs.get-release-id.outputs.repository }}
 
   bump-dolt-packages:
-    needs: [get-version, upload-windows-msi]
+    needs: [get-version, get-release-id, upload-windows-msi]
     runs-on: ubuntu-22.04
     steps:
       - name: Trigger Bump Winget
-        uses: peter-evans/repository-dispatch@v1
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           event-type: bump-winget
-          repository: dolthub/dolt
+          repository: ${{ needs.get-release-id.outputs.repository }}
           client-payload: '{"version": "${{ needs.get-version.outputs.version }}"}'
       - name: Trigger Bump Chocolatey
-        uses: peter-evans/repository-dispatch@v1
+        if: ${{ needs.get-release-id.outputs.repository == 'dolthub/dolt' }}
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           event-type: bump-chocolatey
